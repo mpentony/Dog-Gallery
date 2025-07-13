@@ -1,9 +1,29 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
+
+import requests
+
+#imports a dictionary of data from dog_breeds.py and "prettifies", or styles, the dog names when they appear in the HTML page
+from dog_breeds import prettify_dog_breed
 
 app = Flask("app")
 
-@app.route("/")
-def hello_world():
-  return render_template("dogs.html")
+#function adds a dash in the URL between breed names with multiple words like miniature poodle
+def check_breed(breed):
+  return "/".join(breed.split("-"))
 
-app.run(host='0.0.0.0', port=5000)
+@app.route("/", methods=["GET","POST"])
+def dog_image_gallery():
+    errors=[]
+    if request.method == "POST":
+        breed = request.form["breed"]
+        if not breed:
+            errors.append("Oops! Please enter a breed")
+        if breed: 
+            response=requests.get("https://dog.ceo/api/breed/" + check_breed(breed) + "/images")
+            data=response.json()
+            dog_images=data["message"]
+    return render_template("dogs.html")
+
+
+app.debug = True
+app.run(host='0.0.0.0', port=8080)
